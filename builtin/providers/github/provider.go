@@ -13,12 +13,14 @@ func Provider() terraform.ResourceProvider {
 		Schema: map[string]*schema.Schema{
 			"token": &schema.Schema{
 				Type:        schema.TypeString,
-				Optional:    false,
+				Required:    true,
+				DefaultFunc: schema.EnvDefaultFunc("GITHUB_TOKEN", nil),
 				Description: descriptions["token"],
 			},
 			"organization": &schema.Schema{
 				Type:        schema.TypeString,
-				Optional:    false,
+				Required:    true,
+				DefaultFunc: schema.EnvDefaultFunc("GITHUB_ORGANIZATION", nil),
 				Description: descriptions["organization"],
 			},
 		},
