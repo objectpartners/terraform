@@ -67,13 +67,11 @@ func resourceGithubMembershipUpdate(d *schema.ResourceData, meta interface{}) er
 	n := d.Get("username").(string)
 	r := d.Get("role").(string)
 
-	if d.HasChange("role") {
-		_, _, err := client.Organizations.EditOrgMembership(n, meta.(*GithubClient).organization, &github.Membership{
-			Role: &r,
-		})
-		if err != nil {
-			return err
-		}
+	_, _, err := client.Organizations.EditOrgMembership(n, meta.(*GithubClient).organization, &github.Membership{
+		Role: &r,
+	})
+	if err != nil {
+		return err
 	}
 	return nil
 }
