@@ -24,7 +24,7 @@ func resourceGithubMembership() *schema.Resource {
 			"role": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ValidateFunc: validateRoleValue,
+				ValidateFunc: validateMembershipRoleValue,
 			},
 		},
 	}
@@ -96,7 +96,7 @@ func buildMembershipId(org, user *string) string {
 	return fmt.Sprintf("%s:%s", *org, *user)
 }
 
-func validateRoleValue(v interface{}, k string) (we []string, errors []error) {
+func validateMembershipRoleValue(v interface{}, k string) (we []string, errors []error) {
 	value := v.(string)
 	roleTypes := map[string]bool{
 		"member": true,

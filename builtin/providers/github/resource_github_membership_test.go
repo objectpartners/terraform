@@ -124,7 +124,7 @@ func TestAccResourceGithubMembership_validation(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		_, errors := validateRoleValue(tc.Value, "github_membership")
+		_, errors := validateMembershipRoleValue(tc.Value, "github_membership")
 
 		if len(errors) != tc.ErrCount {
 			t.Fatalf("Expected github_membership to trigger a validation error")
