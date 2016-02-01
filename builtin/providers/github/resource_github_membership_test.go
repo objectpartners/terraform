@@ -20,6 +20,7 @@ func TestAccGithubMembership_basic(t *testing.T) {
 				Config: testAccGithubMembershipConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckGithubMembershipExists("github_membership.test_org_membership", &membership),
+					testAccCheckGithubMembershipRoleState("github_membership.test_org_membership", &membership),
 				),
 			},
 		},
@@ -59,7 +60,7 @@ func testAccCheckGithubMembershipExists(n string, membership *github.Membership)
 		}
 
 		if rs.Primary.ID == "" {
-			return fmt.Errorf("No Team ID is set")
+			return fmt.Errorf("No membership ID is set")
 		}
 
 		conn := testAccProvider.Meta().(*GithubClient).client
@@ -74,7 +75,36 @@ func testAccCheckGithubMembershipExists(n string, membership *github.Membership)
 	}
 }
 
-func TestResourceGithubMembership_validation(t *testing.T) {
+func testAccCheckGithubMembershipRoleState(n string, membership *github.Membership) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[n]
+		if !ok {
+			return fmt.Errorf("Not Found: %s", n)
+		}
+
+		if rs.Primary.ID == "" {
+			return fmt.Errorf("No membership ID is set")
+		}
+
+		conn := testAccProvider.Meta().(*GithubClient).client
+		o, u := parseMembershipId(rs.Primary.ID)
+
+		githubMembership, _, err := conn.Organizations.GetOrgMembership(u, o)
+		if err != nil {
+			return err
+		}
+
+		resourceRole := membership.Role
+		actualRole := githubMembership.Role
+
+		if *resourceRole != *actualRole {
+			return fmt.Errorf("Membership role %v in resource does match actual state of %v", *resourceRole, *actualRole)
+		}
+		return nil
+	}
+}
+
+func TestAccResourceGithubMembership_validation(t *testing.T) {
 	cases := []struct {
 		Value    string
 		ErrCount int
