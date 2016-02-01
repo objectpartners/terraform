@@ -38,10 +38,8 @@ func testAccCheckGithubMembershipDestroy(s *terraform.State) error {
 		membership, resp, err := conn.Organizations.GetOrgMembership(u, o)
 
 		if err == nil {
-			memName := membership.Organization.Login
-			userName := membership.User.Login
 			if membership != nil &&
-				buildMembershipId(*memName, *userName) == rs.Primary.ID {
+				buildMembershipId(membership.Organization.Login, membership.User.Login) == rs.Primary.ID {
 				return fmt.Errorf("Organization membership still exists")
 			}
 		}

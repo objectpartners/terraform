@@ -41,10 +41,7 @@ func resourceGithubMembershipCreate(d *schema.ResourceData, meta interface{}) er
 		return err
 	}
 
-	orgName := membership.Organization.Login
-	userName := membership.User.Login
-
-	d.SetId(buildMembershipId(*orgName, *userName))
+	d.SetId(buildMembershipId(membership.Organization.Login, membership.User.Login))
 
 	return resourceGithubMembershipRead(d, meta)
 }
@@ -97,8 +94,8 @@ func parseMembershipId(id string) (string, string) {
 }
 
 // Since there is no id for memberships, we are storing in form organization:user
-func buildMembershipId(org, user string) string {
-	return fmt.Sprintf("%s:%s", org, user)
+func buildMembershipId(org, user *string) string {
+	return fmt.Sprintf("%s:%s", *org, *user)
 }
 
 func validateRoleValue(v interface{}, k string) (we []string, errors []error) {
