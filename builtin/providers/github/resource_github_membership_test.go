@@ -104,34 +104,6 @@ func testAccCheckGithubMembershipRoleState(n string, membership *github.Membersh
 	}
 }
 
-func TestAccResourceGithubMembership_validation(t *testing.T) {
-	cases := []struct {
-		Value    string
-		ErrCount int
-	}{
-		{
-			Value:    "invalid",
-			ErrCount: 1,
-		},
-		{
-			Value:    "member",
-			ErrCount: 0,
-		},
-		{
-			Value:    "admin",
-			ErrCount: 0,
-		},
-	}
-
-	for _, tc := range cases {
-		_, errors := validateMembershipRoleValue(tc.Value, "github_membership")
-
-		if len(errors) != tc.ErrCount {
-			t.Fatalf("Expected github_membership to trigger a validation error")
-		}
-	}
-}
-
 const testAccGithubMembershipConfig = `
 resource "github_membership" "test_org_membership" {
 	username = "TerraformDummyUser"

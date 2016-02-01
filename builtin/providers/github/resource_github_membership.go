@@ -24,7 +24,7 @@ func resourceGithubMembership() *schema.Resource {
 			"role": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ValidateFunc: validateMembershipRoleValue,
+				ValidateFunc: validateRoleValueFunc([]string{"member", "admin"}),
 			},
 		},
 	}
@@ -94,17 +94,4 @@ func parseMembershipId(id string) (string, string) {
 // Since there is no id for memberships, we are storing in form organization:user
 func buildMembershipId(org, user *string) string {
 	return fmt.Sprintf("%s:%s", *org, *user)
-}
-
-func validateMembershipRoleValue(v interface{}, k string) (we []string, errors []error) {
-	value := v.(string)
-	roleTypes := map[string]bool{
-		"member": true,
-		"admin":  true,
-	}
-
-	if !roleTypes[value] {
-		errors = append(errors, fmt.Errorf("%q is an invalid Github role type for %q", value, k))
-	}
-	return
 }

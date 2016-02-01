@@ -1,0 +1,35 @@
+package github
+
+import (
+	"testing"
+)
+
+func TestAccUtilRole_validation(t *testing.T) {
+	cases := []struct {
+		Value    string
+		ErrCount int
+	}{
+		{
+			Value:    "invalid",
+			ErrCount: 1,
+		},
+		{
+			Value:    "valid_one",
+			ErrCount: 0,
+		},
+		{
+			Value:    "valid_two",
+			ErrCount: 0,
+		},
+	}
+
+	validationFunc := validateRoleValueFunc([]string{"valid_one", "valid_two"})
+
+	for _, tc := range cases {
+		_, errors := validationFunc(tc.Value, "github_membership")
+
+		if len(errors) != tc.ErrCount {
+			t.Fatalf("Expected github_membership to trigger a validation error")
+		}
+	}
+}
