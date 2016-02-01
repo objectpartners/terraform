@@ -98,13 +98,13 @@ func buildMembershipId(org, user *string) string {
 
 func validateRoleValue(v interface{}, k string) (we []string, errors []error) {
 	value := v.(string)
-	viewTypes := map[string]bool{
+	roleTypes := map[string]bool{
 		"member": true,
 		"admin":  true,
 	}
 
-	if !viewTypes[value] {
-		errors = append(errors, fmt.Errorf("%q is an invalid Github role type", k))
+	if !roleTypes[value] {
+		errors = append(errors, fmt.Errorf("%q is an invalid Github role type for %q", value, k))
 	}
 	return
 }
