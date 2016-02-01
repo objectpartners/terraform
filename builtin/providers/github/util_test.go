@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-func TestAccUtilRole_validation(t *testing.T) {
+func TestAccGithubUtilRole_validation(t *testing.T) {
 	cases := []struct {
 		Value    string
 		ErrCount int
