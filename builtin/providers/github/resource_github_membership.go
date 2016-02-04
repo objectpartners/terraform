@@ -1,10 +1,8 @@
 package github
 
 import (
-	"fmt"
 	"github.com/google/go-github/github"
 	"github.com/hashicorp/terraform/helper/schema"
-	"strings"
 )
 
 func resourceGithubMembership() *schema.Resource {
@@ -41,7 +39,7 @@ func resourceGithubMembershipCreate(d *schema.ResourceData, meta interface{}) er
 		return err
 	}
 
-	d.SetId(buildMembershipId(membership.Organization.Login, membership.User.Login))
+	d.SetId(buildTwoPartId(membership.Organization.Login, membership.User.Login))
 
 	return resourceGithubMembershipRead(d, meta)
 }
@@ -83,15 +81,4 @@ func resourceGithubMembershipDelete(d *schema.ResourceData, meta interface{}) er
 	_, err := client.Organizations.RemoveOrgMembership(n, meta.(*GithubClient).organization)
 
 	return err
-}
-
-// return the pieces of the id as org, user
-func parseMembershipId(id string) (string, string) {
-	parts := strings.SplitN(id, ":", 2)
-	return parts[0], parts[1]
-}
-
-// Since there is no id for memberships, we are storing in form organization:user
-func buildMembershipId(org, user *string) string {
-	return fmt.Sprintf("%s:%s", *org, *user)
 }
