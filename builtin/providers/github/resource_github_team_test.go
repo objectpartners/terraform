@@ -2,10 +2,11 @@ package github
 
 import (
 	"fmt"
+	"testing"
+
 	"github.com/google/go-github/github"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
-	"testing"
 )
 
 func TestAccGithubTeam_basic(t *testing.T) {
@@ -20,6 +21,14 @@ func TestAccGithubTeam_basic(t *testing.T) {
 				Config: testAccGithubTeamConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckGithubTeamExists("github_team.foo", &team),
+					testAccCheckGithubTeamAttributes(&team, "Terraform acc test group"),
+				),
+			},
+			resource.TestStep{
+				Config: testAccGithubTeamUpdateConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckGithubTeamExists("github_team.foo", &team),
+					testAccCheckGithubTeamAttributes(&team, "Terraform acc test group - updated"),
 				),
 			},
 		},
@@ -43,6 +52,16 @@ func testAccCheckGithubTeamExists(n string, team *github.Team) resource.TestChec
 			return err
 		}
 		*team = *githubTeam
+		return nil
+	}
+}
+
+func testAccCheckGithubTeamAttributes(team *github.Team, description string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		if *team.Description != description {
+			return fmt.Errorf("Team description does not match: %s, %s", *team.Description, description)
+		}
+
 		return nil
 	}
 }
@@ -74,5 +93,12 @@ const testAccGithubTeamConfig = `
 resource "github_team" "foo" {
 	name = "foo"
 	description = "Terraform acc test group"
+}
+`
+
+const testAccGithubTeamUpdateConfig = `
+resource "github_team" "foo" {
+	name = "foo"
+	description = "Terraform acc test group - updated"
 }
 `

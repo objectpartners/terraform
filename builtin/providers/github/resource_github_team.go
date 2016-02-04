@@ -30,8 +30,10 @@ func resourceGithubTeam() *schema.Resource {
 func resourceGithubTeamCreate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*GithubClient).client
 	n := d.Get("name").(string)
+	desc := d.Get("description").(string)
 	githubTeam, _, err := client.Organizations.CreateTeam(meta.(*GithubClient).organization, &github.Team{
-		Name: &n,
+		Name:        &n,
+		Description: &desc,
 	})
 	if err != nil {
 		return err
@@ -43,12 +45,12 @@ func resourceGithubTeamCreate(d *schema.ResourceData, meta interface{}) error {
 func resourceGithubTeamRead(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*GithubClient).client
 
-	_, err := getGithubTeam(d, client)
+	team, err := getGithubTeam(d, client)
 	if err != nil {
 		d.SetId("")
 		return nil
 	}
-	//TODO need to update Description but go-github doesn't expose it
+	d.Set("description", team.Description)
 	return nil
 }
 
@@ -61,7 +63,8 @@ func resourceGithubTeamUpdate(d *schema.ResourceData, meta interface{}) error {
 		return nil
 	}
 
-	//TODO need to set Description on team before sending it, but go-github doesn't expose it
+	description := d.Get("description").(string)
+	team.Description = &description
 
 	team, _, err = client.Organizations.EditTeam(*team.ID, team)
 	if err != nil {
