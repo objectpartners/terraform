@@ -50,6 +50,7 @@ func resourceGithubTeamRead(d *schema.ResourceData, meta interface{}) error {
 		return nil
 	}
 	d.Set("description", team.Description)
+	d.Set("name", team.Name)
 	return nil
 }
 
