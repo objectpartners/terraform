@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/hashicorp/terraform/helper/schema"
 	"strconv"
+	"strings"
 )
 
 func toGithubId(id string) int {
@@ -31,4 +32,15 @@ func validateRoleValueFunc(roles []string) schema.SchemaValidateFunc {
 		}
 		return
 	}
+}
+
+// return the pieces of id `a:b` as a, b
+func parseTwoPartId(id string) (string, string) {
+	parts := strings.SplitN(id, ":", 2)
+	return parts[0], parts[1]
+}
+
+// format the strings into an id `a:b`
+func buildTwoPartId(a, b *string) string {
+	return fmt.Sprintf("%s:%s", *a, *b)
 }
