@@ -17,7 +17,6 @@ func resourceGithubTeam() *schema.Resource {
 			"name": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
-				ForceNew: true,
 			},
 			"description": &schema.Schema{
 				Type:     schema.TypeString,
@@ -51,6 +50,7 @@ func resourceGithubTeamRead(d *schema.ResourceData, meta interface{}) error {
 		return nil
 	}
 	d.Set("description", team.Description)
+	d.Set("name", team.Name)
 	return nil
 }
 
@@ -63,8 +63,10 @@ func resourceGithubTeamUpdate(d *schema.ResourceData, meta interface{}) error {
 		return nil
 	}
 
+	name := d.Get("name").(string)
 	description := d.Get("description").(string)
 	team.Description = &description
+	team.Name = &name
 
 	team, _, err = client.Organizations.EditTeam(*team.ID, team)
 	if err != nil {
