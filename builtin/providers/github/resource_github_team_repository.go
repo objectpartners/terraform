@@ -1,11 +1,16 @@
 package github
 
 import (
+	"errors"
+	"github.com/google/go-github/github"
 	"github.com/hashicorp/terraform/helper/schema"
 )
 
-func resourceGithubTeamRepository() *schema.Resource {
+const pullPermission string = "pull"
+const pushPermission string = "push"
+const adminPermission string = "admin"
 
+func resourceGithubTeamRepository() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceGithubTeamRepositoryCreate,
 		Read:   resourceGithubTeamRepositoryRead,
@@ -24,28 +29,101 @@ func resourceGithubTeamRepository() *schema.Resource {
 				ForceNew: true,
 			},
 			"permission": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
-				//TODO validate function (pull, push, admin)
+				Type:         schema.TypeString,
+				Optional:     true,
+				Default:      "pull",
+				ValidateFunc: validateRoleValueFunc([]string{"pull", "push", "admin"}),
 			},
 		},
 	}
 }
 
 func resourceGithubTeamRepositoryCreate(d *schema.ResourceData, meta interface{}) error {
-	//TODO the ID to store in the state file needs to be team_id:repository
-	return nil
+	client := meta.(*GithubClient).client
+	t := d.Get("team_id").(string)
+	r := d.Get("repository").(string)
+	p := d.Get("permission").(string)
+
+	_, err := client.Organizations.AddTeamRepo(toGithubId(t), meta.(*GithubClient).organization, r,
+		&github.OrganizationAddTeamRepoOptions{Permission: p})
+
+	if err != nil {
+		return err
+	}
+
+	d.SetId(buildTwoPartId(&t, &r))
+
+	return resourceGithubTeamRepositoryRead(d, meta)
 }
 
 func resourceGithubTeamRepositoryRead(d *schema.ResourceData, meta interface{}) error {
+	client := meta.(*GithubClient).client
+	t := d.Get("team_id").(string)
+	r := d.Get("repository").(string)
+
+	repo, _, repoErr := client.Organizations.IsTeamRepo(toGithubId(t), meta.(*GithubClient).organization, r)
+
+	if repoErr != nil {
+		d.SetId("")
+		return nil
+	}
+
+	repositoryName := repo.Name
+
+	d.Set("team_id", t)
+	d.Set("repository", repositoryName)
+
+	permName, permErr := getRepoPermission(repo.Permissions)
+
+	if permErr != nil {
+		return permErr
+	}
+
+	d.Set("permission", permName)
+
 	return nil
 }
 
 func resourceGithubTeamRepositoryUpdate(d *schema.ResourceData, meta interface{}) error {
-	return nil
+	client := meta.(*GithubClient).client
+	t := d.Get("team_id").(string)
+	r := d.Get("repository").(string)
+	p := d.Get("permission").(string)
+
+	// the go-github library's AddTeamRepo method uses the add/update endpoint from Github API
+	_, err := client.Organizations.AddTeamRepo(toGithubId(t), meta.(*GithubClient).organization, r,
+		&github.OrganizationAddTeamRepoOptions{Permission: p})
+
+	if err != nil {
+		return err
+	}
+	return resourceGithubTeamRepositoryRead(d, meta)
 }
 
 func resourceGithubTeamRepositoryDelete(d *schema.ResourceData, meta interface{}) error {
-	return nil
+	client := meta.(*GithubClient).client
+	t := d.Get("team_id").(string)
+	r := d.Get("repository").(string)
+
+	_, err := client.Organizations.RemoveTeamRepo(toGithubId(t), meta.(*GithubClient).organization, r)
+
+	return err
+}
+
+func getRepoPermission(p *map[string]bool) (string, error) {
+
+	// Permissions are returned in this map format such that if you have a certain level
+	// of permission, all levels below are also true. For example, if a team has push
+	// permission, the map will be: {"pull": true, "push": true, "admin": false}
+	if (*p)[adminPermission] {
+		return adminPermission, nil
+	} else if (*p)[pushPermission] {
+		return pushPermission, nil
+	} else {
+		if (*p)[pullPermission] {
+			return pullPermission, nil
+		} else {
+			return "", errors.New("At least one permission expected from permissions map.")
+		}
+	}
 }
