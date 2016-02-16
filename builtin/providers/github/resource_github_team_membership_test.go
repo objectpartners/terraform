@@ -20,7 +20,14 @@ func TestAccGithubTeamMembership_basic(t *testing.T) {
 				Config: testAccGithubTeamMembershipConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckGithubTeamMembershipExists("github_team_membership.test_team_membership", &membership),
-					testAccCheckGithubTeamMembershipRoleState("github_team_membership.test_team_membership", &membership),
+					testAccCheckGithubTeamMembershipRoleState("github_team_membership.test_team_membership", "member", &membership),
+				),
+			},
+			resource.TestStep{
+				Config: testAccGithubTeamMembershipUpdateConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckGithubTeamMembershipExists("github_team_membership.test_team_membership", &membership),
+					testAccCheckGithubTeamMembershipRoleState("github_team_membership.test_team_membership", "maintainer", &membership),
 				),
 			},
 		},
@@ -74,7 +81,7 @@ func testAccCheckGithubTeamMembershipExists(n string, membership *github.Members
 	}
 }
 
-func testAccCheckGithubTeamMembershipRoleState(n string, membership *github.Membership) resource.TestCheckFunc {
+func testAccCheckGithubTeamMembershipRoleState(n, expected string, membership *github.Membership) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -95,6 +102,10 @@ func testAccCheckGithubTeamMembershipRoleState(n string, membership *github.Memb
 
 		resourceRole := membership.Role
 		actualRole := teamMembership.Role
+
+		if *resourceRole != expected {
+			return fmt.Errorf("Team membership role %v in resource does match expected state of %v", *resourceRole, expected)
+		}
 
 		if *resourceRole != *actualRole {
 			return fmt.Errorf("Team membership role %v in resource does match actual state of %v", *resourceRole, *actualRole)
@@ -118,5 +129,23 @@ resource "github_team_membership" "test_team_membership" {
 	team_id = "${github_team.test_team.id}"
 	username = "TerraformDummyUser"
 	role = "member"
+}
+`
+
+const testAccGithubTeamMembershipUpdateConfig = `
+resource "github_membership" "test_org_membership" {
+	username = "TerraformDummyUser"
+	role = "member"
+}
+
+resource "github_team" "test_team" {
+	name = "foo"
+	description = "Terraform acc test group"
+}
+
+resource "github_team_membership" "test_team_membership" {
+	team_id = "${github_team.test_team.id}"
+	username = "TerraformDummyUser"
+	role = "maintainer"
 }
 `
