@@ -1070,6 +1070,12 @@
 			"revision": "2a60fc2ba6c19de80291203597d752e9ba58e4c0"
 		},
 		{
+			"checksumSHA1": "klfNfdEPsrWYLps2qBkLgfJsNYI=",
+			"path": "github.com/gorilla/websocket",
+			"revision": "a836c37014dbbf0d1e871d04531b851fcbdeb22d",
+			"revisionTime": "2016-07-11T04:44:50Z"
+		},
+		{
 			"path": "github.com/gosimple/slug",
 			"revision": "ea39c588e0a5b1064e0f98d7307e6c2f286f32e8"
 		},
@@ -1814,6 +1820,18 @@
 		{
 			"path": "github.com/rainycape/unidecode",
 			"revision": "cb7f23ec59bec0d61b19c56cd88cee3d0cc1870c"
+		},
+		{
+			"checksumSHA1": "2mTGNpWpNh6/gkjb3jSM3Lqt/GI=",
+			"path": "github.com/rancher/go-rancher",
+			"revision": "37c17e456a2d6dce279f54ee2f957797d30a20dc",
+			"revisionTime": "2016-06-26T05:36:43Z"
+		},
+		{
+			"checksumSHA1": "Ya5XAAxtABGfQm9p/otNdB2Ssk4=",
+			"path": "github.com/rancher/go-rancher/client",
+			"revision": "37c17e456a2d6dce279f54ee2f957797d30a20dc",
+			"revisionTime": "2016-06-26T05:36:43Z"
 		},
 		{
 			"comment": "v2.0.1-8-g983d3a5",
