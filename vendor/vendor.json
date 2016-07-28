@@ -1822,10 +1822,10 @@
 			"revision": "cb7f23ec59bec0d61b19c56cd88cee3d0cc1870c"
 		},
 		{
-			"checksumSHA1": "2mTGNpWpNh6/gkjb3jSM3Lqt/GI=",
+			"checksumSHA1": "qUzlhapkSJKuzsOjgBy1Yh2P/t0=",
 			"path": "github.com/rancher/go-rancher",
-			"revision": "37c17e456a2d6dce279f54ee2f957797d30a20dc",
-			"revisionTime": "2016-06-26T05:36:43Z"
+			"revision": "bdb84801f2cf82be73e210ff586c531b07c83c42",
+			"revisionTime": "2016-07-27T23:27:26Z"
 		},
 		{
 			"checksumSHA1": "Ya5XAAxtABGfQm9p/otNdB2Ssk4=",
