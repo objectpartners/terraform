@@ -95,6 +95,8 @@ var InternalProviders = map[string]plugin.ProviderFunc{
 	"packet":       packetprovider.Provider,
 	"postgresql":   postgresqlprovider.Provider,
 	"powerdns":     powerdnsprovider.Provider,
+	"rabbitmq":     rabbitmqprovider.Provider,
+	"rancher":      rancherprovider.Provider,
 	"random":       randomprovider.Provider,
 	"rundeck":      rundeckprovider.Provider,
 	"scaleway":     scalewayprovider.Provider,

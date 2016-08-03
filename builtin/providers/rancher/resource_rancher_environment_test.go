@@ -34,7 +34,7 @@ func TestAccRancherEnvironment_Basic(t *testing.T) {
 }
 
 func testAccCheckRancherEnvironmentDestroy(s *terraform.State) error {
-	rancher := testAccProvider.Meta().(*client.RancherClient)
+	rancher, _ := testAccProvider.Meta().(*RancherClientProvider).client()
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "rancher_environment" {
@@ -42,10 +42,8 @@ func testAccCheckRancherEnvironmentDestroy(s *terraform.State) error {
 		}
 
 		env, _ := rancher.Project.ById(rs.Primary.ID)
-		if env != nil {
-			if env.State != "removed" && env.State != "purged" {
-				return fmt.Errorf("Environment[%s] still exists [%s]", env.Id, env.State)
-			}
+		if env != nil && env.State != "removed" {
+			return fmt.Errorf("Environment[%s] still exists with state %s", env.Id, env.State)
 		}
 
 	}
@@ -64,7 +62,7 @@ func testAccCheckRancherEnvironmentExists(n string, env *client.Project) resourc
 			return fmt.Errorf("No Record ID is set")
 		}
 
-		rancher := testAccProvider.Meta().(*client.RancherClient)
+		rancher, _ := testAccProvider.Meta().(*RancherClientProvider).client()
 		environment, err := rancher.Project.ById(rs.Primary.ID)
 		if err != nil {
 			return err

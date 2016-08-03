@@ -1,6 +1,8 @@
 package rancher
 
 import (
+	"strings"
+
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/terraform"
 	"github.com/rancher/go-rancher/client"
@@ -33,7 +35,8 @@ func Provider() terraform.ResourceProvider {
 		},
 
 		ResourcesMap: map[string]*schema.Resource{
-			"rancher_environment": resourceRancherEnvironment(),
+			"rancher_environment":        resourceRancherEnvironment(),
+			"rancher_registration_token": resourceRancherRegistrationToken(),
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{},
@@ -51,6 +54,25 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	}
 	if secret := d.Get("secret_key").(string); secret != "" {
 		opts.SecretKey = secret
+	}
+	return &RancherClientProvider{
+		Opts: opts,
+	}, nil
+}
+
+type RancherClientProvider struct {
+	Opts *client.ClientOpts
+}
+
+func (rancherClientProvider *RancherClientProvider) client() (*client.RancherClient, error) {
+	return client.NewRancherClient(rancherClientProvider.Opts)
+}
+
+func (rancherClientProvider *RancherClientProvider) clientFor(environmentId string) (*client.RancherClient, error) {
+	opts := &client.ClientOpts{
+		Url:       strings.Join([]string{rancherClientProvider.Opts.Url, "v1", "projects", environmentId, "schemas"}, "/"),
+		AccessKey: rancherClientProvider.Opts.AccessKey,
+		SecretKey: rancherClientProvider.Opts.SecretKey,
 	}
 	return client.NewRancherClient(opts)
 }

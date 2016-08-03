@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/hashicorp/errwrap"
+	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/rancher/go-rancher/client"
 )
@@ -45,7 +47,7 @@ func resourceRancherEnvironment() *schema.Resource {
 }
 
 func resourceRancherEnvironmentCreate(d *schema.ResourceData, meta interface{}) error {
-	rClient := meta.(*client.RancherClient)
+	rClient, _ := meta.(*RancherClientProvider).client()
 	settings := &client.Project{
 		Name:           d.Get("name").(string),
 		Description:    d.Get("description").(string),
@@ -70,7 +72,7 @@ func resourceRancherEnvironmentCreate(d *schema.ResourceData, meta interface{}) 
 }
 
 func resourceRancherEnvironmentRead(d *schema.ResourceData, meta interface{}) error {
-	rClient := meta.(*client.RancherClient)
+	rClient, _ := meta.(*RancherClientProvider).client()
 	environment, err := rClient.Project.ById(d.Id())
 	if err != nil {
 		d.SetId("")
@@ -94,7 +96,7 @@ func resourceRancherEnvironmentUpdate(d *schema.ResourceData, meta interface{}) 
 }
 
 func resourceRancherEnvironmentDelete(d *schema.ResourceData, meta interface{}) error {
-	rClient := meta.(*client.RancherClient)
+	rClient, _ := meta.(*RancherClientProvider).client()
 	environment, err := rClient.Project.ById(d.Id())
 	if err != nil {
 		return nil
@@ -103,15 +105,18 @@ func resourceRancherEnvironmentDelete(d *schema.ResourceData, meta interface{}) 
 	if err != nil {
 		return err
 	}
-	_, _ = retry(func() (interface{}, error) {
+	rErr := resource.Retry(30*time.Second, func() *resource.RetryError {
 		environment, err := rClient.Project.ById(d.Id())
 		if err != nil {
-			return nil, err
+			return resource.NonRetryableError(err)
 		}
-		if environment.State != "removed" && environment.State != "purged" {
-			return nil, fmt.Errorf("Environment[%s] is not deleted.", environment.Id)
+		if environment.State != "removed" {
+			return resource.RetryableError(fmt.Errorf("Environment[%s] is not [removed].", environment.Id))
 		}
-		return environment, nil
-	}, time.Duration(30*time.Second), time.Duration(3*time.Second))
+		return nil
+	})
+	if rErr != nil {
+		return errwrap.Wrapf("{{err}}", err)
+	}
 	return nil
 }
