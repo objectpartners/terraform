@@ -28,7 +28,7 @@ func TestAccRancherRegistrationToken_Basic(t *testing.T) {
 }
 
 func testAccCheckRancherRegistrationTokenDestroy(s *terraform.State) error {
-	rancher, _ := testAccProvider.Meta().(*RancherClientProvider).client()
+	rancher, _ := testAccProvider.Meta().(*ClientProvider).client()
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "rancher_registration_token" {
@@ -55,7 +55,7 @@ func testAccCheckRancherRegistrationTokenExists(n string, token *client.Registra
 			return fmt.Errorf("No Record ID is set")
 		}
 
-		rancher, _ := testAccProvider.Meta().(*RancherClientProvider).client()
+		rancher, _ := testAccProvider.Meta().(*ClientProvider).client()
 		t, err := rancher.RegistrationToken.ById(rs.Primary.ID)
 		if err != nil {
 			return err

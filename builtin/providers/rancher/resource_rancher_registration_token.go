@@ -52,7 +52,7 @@ func resourceRancherRegistrationToken() *schema.Resource {
 
 func resourceRancherRegistrationTokenCreate(d *schema.ResourceData, meta interface{}) error {
 	rClient, err := retry(func() (interface{}, error) {
-		return meta.(*RancherClientProvider).clientFor(d.Get("environment_id").(string))
+		return meta.(*ClientProvider).clientFor(d.Get("environment_id").(string))
 	}, time.Duration(30*time.Second), time.Duration(3*time.Second))
 	if err != nil {
 		return err
@@ -71,7 +71,7 @@ func resourceRancherRegistrationTokenCreate(d *schema.ResourceData, meta interfa
 }
 
 func resourceRancherRegistrationTokenRead(d *schema.ResourceData, meta interface{}) error {
-	rClient, err := meta.(*RancherClientProvider).client()
+	rClient, err := meta.(*ClientProvider).client()
 	if err != nil {
 		return err
 	}
@@ -90,7 +90,7 @@ func resourceRancherRegistrationTokenRead(d *schema.ResourceData, meta interface
 }
 
 func resourceRancherRegistrationTokenUpdate(d *schema.ResourceData, meta interface{}) error {
-	rClient, err := meta.(*RancherClientProvider).clientFor(d.Get("environment_id").(string))
+	rClient, err := meta.(*ClientProvider).clientFor(d.Get("environment_id").(string))
 	if err != nil {
 		return err
 	}
@@ -98,7 +98,7 @@ func resourceRancherRegistrationTokenUpdate(d *schema.ResourceData, meta interfa
 	if err != nil {
 		return err
 	}
-	token, err = rClient.RegistrationToken.Update(token, &client.RegistrationToken{
+	_, err = rClient.RegistrationToken.Update(token, &client.RegistrationToken{
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),
 	})
@@ -109,7 +109,7 @@ func resourceRancherRegistrationTokenUpdate(d *schema.ResourceData, meta interfa
 }
 
 func resourceRancherRegistrationTokenDelete(d *schema.ResourceData, meta interface{}) error {
-	rClient, err := meta.(*RancherClientProvider).clientFor(d.Get("environment_id").(string))
+	rClient, err := meta.(*ClientProvider).clientFor(d.Get("environment_id").(string))
 	if err != nil {
 		return err
 	}
@@ -122,8 +122,8 @@ func resourceRancherRegistrationTokenDelete(d *schema.ResourceData, meta interfa
 		return err
 	}
 	rErr := resource.Retry(30*time.Second, func() *resource.RetryError {
-		t, err := rClient.RegistrationToken.ById(d.Id())
-		if err != nil {
+		t, e := rClient.RegistrationToken.ById(d.Id())
+		if e != nil {
 			return resource.NonRetryableError(err)
 		}
 		if t.State != "inactive" {
@@ -143,8 +143,8 @@ func resourceRancherRegistrationTokenDelete(d *schema.ResourceData, meta interfa
 		return err
 	}
 	rErr = resource.Retry(30*time.Second, func() *resource.RetryError {
-		t, err := rClient.RegistrationToken.ById(d.Id())
-		if err != nil {
+		t, e := rClient.RegistrationToken.ById(d.Id())
+		if e != nil {
 			return resource.NonRetryableError(err)
 		}
 		if t.State != "removed" {

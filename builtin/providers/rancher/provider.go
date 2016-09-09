@@ -55,22 +55,22 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	if secret := d.Get("secret_key").(string); secret != "" {
 		opts.SecretKey = secret
 	}
-	return &RancherClientProvider{
+	return &ClientProvider{
 		Opts: opts,
 	}, nil
 }
 
-type RancherClientProvider struct {
+type ClientProvider struct {
 	Opts *client.ClientOpts
 }
 
-func (rancherClientProvider *RancherClientProvider) client() (*client.RancherClient, error) {
+func (rancherClientProvider *ClientProvider) client() (*client.RancherClient, error) {
 	return client.NewRancherClient(rancherClientProvider.Opts)
 }
 
-func (rancherClientProvider *RancherClientProvider) clientFor(environmentId string) (*client.RancherClient, error) {
+func (rancherClientProvider *ClientProvider) clientFor(environmentID string) (*client.RancherClient, error) {
 	opts := &client.ClientOpts{
-		Url:       strings.Join([]string{rancherClientProvider.Opts.Url, "v1", "projects", environmentId, "schemas"}, "/"),
+		Url:       strings.Join([]string{rancherClientProvider.Opts.Url, "v1", "projects", environmentID, "schemas"}, "/"),
 		AccessKey: rancherClientProvider.Opts.AccessKey,
 		SecretKey: rancherClientProvider.Opts.SecretKey,
 	}

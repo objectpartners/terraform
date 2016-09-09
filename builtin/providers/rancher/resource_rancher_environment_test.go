@@ -34,7 +34,7 @@ func TestAccRancherEnvironment_Basic(t *testing.T) {
 }
 
 func testAccCheckRancherEnvironmentDestroy(s *terraform.State) error {
-	rancher, _ := testAccProvider.Meta().(*RancherClientProvider).client()
+	rancher, _ := testAccProvider.Meta().(*ClientProvider).client()
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "rancher_environment" {
@@ -62,7 +62,7 @@ func testAccCheckRancherEnvironmentExists(n string, env *client.Project) resourc
 			return fmt.Errorf("No Record ID is set")
 		}
 
-		rancher, _ := testAccProvider.Meta().(*RancherClientProvider).client()
+		rancher, _ := testAccProvider.Meta().(*ClientProvider).client()
 		environment, err := rancher.Project.ById(rs.Primary.ID)
 		if err != nil {
 			return err
