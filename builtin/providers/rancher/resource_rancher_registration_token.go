@@ -51,9 +51,7 @@ func resourceRancherRegistrationToken() *schema.Resource {
 }
 
 func resourceRancherRegistrationTokenCreate(d *schema.ResourceData, meta interface{}) error {
-	rClient, err := retry(func() (interface{}, error) {
-		return meta.(*ClientProvider).clientFor(d.Get("environment_id").(string))
-	}, time.Duration(30*time.Second), time.Duration(3*time.Second))
+	rClient, err := meta.(*ClientProvider).clientFor(d.Get("environment_id").(string))
 	if err != nil {
 		return err
 	}
@@ -62,11 +60,12 @@ func resourceRancherRegistrationTokenCreate(d *schema.ResourceData, meta interfa
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),
 	}
-	token, err := rClient.(*client.RancherClient).RegistrationToken.Create(opts)
+	token, err := rClient.RegistrationToken.Create(opts)
 	if err != nil {
 		return err
 	}
 	d.SetId(token.Id)
+	//TODO check for active state
 	return resourceRancherRegistrationTokenRead(d, meta)
 }
 
@@ -127,12 +126,12 @@ func resourceRancherRegistrationTokenDelete(d *schema.ResourceData, meta interfa
 			return resource.NonRetryableError(err)
 		}
 		if t.State != "inactive" {
-			return resource.RetryableError(fmt.Errorf("RegistrationToken[%s] is not [inactive].", t.Id))
+			return resource.RetryableError(fmt.Errorf("RegistrationToken[%s] is not inactive[%s]].", t.Id, t.State))
 		}
 		return nil
 	})
 	if rErr != nil {
-		return errwrap.Wrapf("{{err}}", err)
+		return errwrap.Wrapf("{{err}}", rErr)
 	}
 	token, err = rClient.RegistrationToken.ById(d.Id())
 	if err != nil {
@@ -148,12 +147,12 @@ func resourceRancherRegistrationTokenDelete(d *schema.ResourceData, meta interfa
 			return resource.NonRetryableError(err)
 		}
 		if t.State != "removed" {
-			return resource.RetryableError(fmt.Errorf("RegistrationToken[%s] is not [removed].", t.Id))
+			return resource.RetryableError(fmt.Errorf("RegistrationToken[%s] is not removed[%s]].", t.Id, t.State))
 		}
 		return nil
 	})
 	if rErr != nil {
-		return errwrap.Wrapf("{{err}}", err)
+		return errwrap.Wrapf("{{err}}", rErr)
 	}
 	return nil
 }

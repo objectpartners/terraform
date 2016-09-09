@@ -47,7 +47,10 @@ func resourceRancherEnvironment() *schema.Resource {
 }
 
 func resourceRancherEnvironmentCreate(d *schema.ResourceData, meta interface{}) error {
-	rClient, _ := meta.(*ClientProvider).client()
+	rClient, err := meta.(*ClientProvider).client()
+	if err != nil {
+		return err
+	}
 	settings := &client.Project{
 		Name:           d.Get("name").(string),
 		Description:    d.Get("description").(string),
@@ -68,11 +71,15 @@ func resourceRancherEnvironmentCreate(d *schema.ResourceData, meta interface{}) 
 		return err
 	}
 	d.SetId(environment.Id)
+	//TODO check for active state
 	return resourceRancherEnvironmentRead(d, meta)
 }
 
 func resourceRancherEnvironmentRead(d *schema.ResourceData, meta interface{}) error {
-	rClient, _ := meta.(*ClientProvider).client()
+	rClient, err := meta.(*ClientProvider).client()
+	if err != nil {
+		return err
+	}
 	environment, err := rClient.Project.ById(d.Id())
 	if err != nil {
 		d.SetId("")
@@ -92,11 +99,15 @@ func resourceRancherEnvironmentRead(d *schema.ResourceData, meta interface{}) er
 }
 
 func resourceRancherEnvironmentUpdate(d *schema.ResourceData, meta interface{}) error {
+	//TODO
 	return nil
 }
 
 func resourceRancherEnvironmentDelete(d *schema.ResourceData, meta interface{}) error {
-	rClient, _ := meta.(*ClientProvider).client()
+	rClient, err := meta.(*ClientProvider).client()
+	if err != nil {
+		return err
+	}
 	environment, err := rClient.Project.ById(d.Id())
 	if err != nil {
 		return nil
@@ -111,12 +122,12 @@ func resourceRancherEnvironmentDelete(d *schema.ResourceData, meta interface{}) 
 			return resource.NonRetryableError(err)
 		}
 		if environment.State != "removed" {
-			return resource.RetryableError(fmt.Errorf("Environment[%s] is not [removed].", environment.Id))
+			return resource.RetryableError(fmt.Errorf("Environment[%s] is not removed[%s].", environment.Id, environment.State))
 		}
 		return nil
 	})
 	if rErr != nil {
-		return errwrap.Wrapf("{{err}}", err)
+		return errwrap.Wrapf("{{err}}", rErr)
 	}
 	return nil
 }
