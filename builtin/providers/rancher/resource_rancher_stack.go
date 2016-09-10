@@ -41,7 +41,7 @@ func resourceRancherStack() *schema.Resource {
 			},
 			"start_on_create": &schema.Schema{
 				Type:     schema.TypeBool,
-				Required: true,
+				Optional: true,
 				Default:  true,
 			},
 		},
@@ -102,5 +102,32 @@ func resourceRancherStackUpdate(d *schema.ResourceData, meta interface{}) error 
 }
 
 func resourceRancherStackDelete(d *schema.ResourceData, meta interface{}) error {
+	rClient, err := meta.(*ClientProvider).clientFor(d.Get("environment_id").(string))
+	if err != nil {
+		return err
+	}
+	stack, err := rClient.Environment.ById(d.Id())
+	if err != nil {
+		return nil
+	}
+
+	stack, err = rClient.Environment.ById(d.Id())
+	if err != nil {
+		return nil
+	}
+	_, err = rClient.Environment.ActionRemove(stack)
+	if err != nil {
+		return err
+	}
+	rErr := waitForStatus("removed", d.Id(), func(id string) (getState, error) {
+		t, e := rClient.Environment.ById(id)
+		return func() string {
+			return t.State
+		}, e
+	})
+	if rErr != nil {
+		d.SetId("")
+		return errwrap.Wrapf("{{err}}", rErr)
+	}
 	return nil
 }
