@@ -1,11 +1,7 @@
 package rancher
 
 import (
-	"fmt"
-	"time"
-
 	"github.com/hashicorp/errwrap"
-	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/rancher/go-rancher/client"
 )
@@ -70,15 +66,11 @@ func resourceRancherStackCreate(d *schema.ResourceData, meta interface{}) error 
 		return err
 	}
 	d.SetId(stack.Id)
-	rErr := resource.Retry(30*time.Second, func() *resource.RetryError {
-		stack, e := rClient.Environment.ById(d.Id())
-		if e != nil {
-			return resource.NonRetryableError(err)
-		}
-		if stack.State != "active" {
-			return resource.RetryableError(fmt.Errorf("Stack[%s] is not active[%s].", stack.Id, stack.State))
-		}
-		return nil
+	rErr := waitForStatus("active", d.Id(), func(id string) (getState, error) {
+		s, e := rClient.Environment.ById(id)
+		return func() string {
+			return s.State
+		}, e
 	})
 	if rErr != nil {
 		d.SetId("")

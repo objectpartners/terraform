@@ -1,11 +1,7 @@
 package rancher
 
 import (
-	"fmt"
-	"time"
-
 	"github.com/hashicorp/errwrap"
-	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/rancher/go-rancher/client"
 )
@@ -65,7 +61,16 @@ func resourceRancherRegistrationTokenCreate(d *schema.ResourceData, meta interfa
 		return err
 	}
 	d.SetId(token.Id)
-	//TODO check for active state
+	rErr := waitForStatus("active", d.Id(), func(id string) (getState, error) {
+		t, e := rClient.RegistrationToken.ById(id)
+		return func() string {
+			return t.State
+		}, e
+	})
+	if rErr != nil {
+		d.SetId("")
+		return errwrap.Wrapf("{{err}}", rErr)
+	}
 	return resourceRancherRegistrationTokenRead(d, meta)
 }
 
@@ -120,19 +125,18 @@ func resourceRancherRegistrationTokenDelete(d *schema.ResourceData, meta interfa
 	if err != nil {
 		return err
 	}
-	rErr := resource.Retry(30*time.Second, func() *resource.RetryError {
-		t, e := rClient.RegistrationToken.ById(d.Id())
-		if e != nil {
-			return resource.NonRetryableError(err)
-		}
-		if t.State != "inactive" {
-			return resource.RetryableError(fmt.Errorf("RegistrationToken[%s] is not inactive[%s]].", t.Id, t.State))
-		}
-		return nil
+
+	rErr := waitForStatus("inactive", d.Id(), func(id string) (getState, error) {
+		t, e := rClient.RegistrationToken.ById(id)
+		return func() string {
+			return t.State
+		}, e
 	})
 	if rErr != nil {
+		d.SetId("")
 		return errwrap.Wrapf("{{err}}", rErr)
 	}
+
 	token, err = rClient.RegistrationToken.ById(d.Id())
 	if err != nil {
 		return nil
@@ -141,17 +145,14 @@ func resourceRancherRegistrationTokenDelete(d *schema.ResourceData, meta interfa
 	if err != nil {
 		return err
 	}
-	rErr = resource.Retry(30*time.Second, func() *resource.RetryError {
-		t, e := rClient.RegistrationToken.ById(d.Id())
-		if e != nil {
-			return resource.NonRetryableError(err)
-		}
-		if t.State != "removed" {
-			return resource.RetryableError(fmt.Errorf("RegistrationToken[%s] is not removed[%s]].", t.Id, t.State))
-		}
-		return nil
+	rErr = waitForStatus("removed", d.Id(), func(id string) (getState, error) {
+		t, e := rClient.RegistrationToken.ById(id)
+		return func() string {
+			return t.State
+		}, e
 	})
 	if rErr != nil {
+		d.SetId("")
 		return errwrap.Wrapf("{{err}}", rErr)
 	}
 	return nil

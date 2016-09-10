@@ -1,11 +1,7 @@
 package rancher
 
 import (
-	"fmt"
-	"time"
-
 	"github.com/hashicorp/errwrap"
-	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/rancher/go-rancher/client"
 )
@@ -71,7 +67,16 @@ func resourceRancherEnvironmentCreate(d *schema.ResourceData, meta interface{}) 
 		return err
 	}
 	d.SetId(environment.Id)
-	//TODO check for active state
+	rErr := waitForStatus("active", d.Id(), func(id string) (getState, error) {
+		p, e := rClient.Project.ById(id)
+		return func() string {
+			return p.State
+		}, e
+	})
+	if rErr != nil {
+		d.SetId("")
+		return errwrap.Wrapf("{{err}}", rErr)
+	}
 	return resourceRancherEnvironmentRead(d, meta)
 }
 
@@ -116,17 +121,14 @@ func resourceRancherEnvironmentDelete(d *schema.ResourceData, meta interface{}) 
 	if err != nil {
 		return err
 	}
-	rErr := resource.Retry(30*time.Second, func() *resource.RetryError {
-		environment, e := rClient.Project.ById(d.Id())
-		if e != nil {
-			return resource.NonRetryableError(err)
-		}
-		if environment.State != "removed" {
-			return resource.RetryableError(fmt.Errorf("Environment[%s] is not removed[%s].", environment.Id, environment.State))
-		}
-		return nil
+	rErr := waitForStatus("removed", d.Id(), func(id string) (getState, error) {
+		p, e := rClient.Project.ById(id)
+		return func() string {
+			return p.State
+		}, e
 	})
 	if rErr != nil {
+		d.SetId("")
 		return errwrap.Wrapf("{{err}}", rErr)
 	}
 	return nil
