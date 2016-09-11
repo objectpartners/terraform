@@ -98,6 +98,7 @@ func resourceRancherStackRead(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceRancherStackUpdate(d *schema.ResourceData, meta interface{}) error {
+	//TODO
 	return nil
 }
 

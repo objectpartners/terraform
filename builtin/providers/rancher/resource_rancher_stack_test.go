@@ -1,6 +1,7 @@
 package rancher
 
 import (
+	"errors"
 	"fmt"
 	"testing"
 
@@ -52,7 +53,7 @@ func testAccCheckRancherStackExists(n string, stack *client.Environment) resourc
 		}
 
 		if rs.Primary.ID == "" {
-			return fmt.Errorf("No Record ID is set")
+			return errors.New("No Record ID is set")
 		}
 
 		rancher, _ := testAccProvider.Meta().(*ClientProvider).client()

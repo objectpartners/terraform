@@ -10,7 +10,6 @@ func resourceRancherRegistrationToken() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceRancherRegistrationTokenCreate,
 		Read:   resourceRancherRegistrationTokenRead,
-		Update: resourceRancherRegistrationTokenUpdate,
 		Delete: resourceRancherRegistrationTokenDelete,
 
 		Importer: &schema.ResourceImporter{
@@ -25,10 +24,12 @@ func resourceRancherRegistrationToken() *schema.Resource {
 			"name": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
+				ForceNew: true,
 			},
 			"description": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
+				ForceNew: true,
 			},
 			"command": &schema.Schema{
 				Type:     schema.TypeString,
@@ -90,25 +91,6 @@ func resourceRancherRegistrationTokenRead(d *schema.ResourceData, meta interface
 	d.Set("command", token.Command)
 	d.Set("image", token.Image)
 	d.Set("token", token.Token)
-	return nil
-}
-
-func resourceRancherRegistrationTokenUpdate(d *schema.ResourceData, meta interface{}) error {
-	rClient, err := meta.(*ClientProvider).clientFor(d.Get("environment_id").(string))
-	if err != nil {
-		return err
-	}
-	token, err := rClient.RegistrationToken.ById(d.Id())
-	if err != nil {
-		return err
-	}
-	_, err = rClient.RegistrationToken.Update(token, &client.RegistrationToken{
-		Name:        d.Get("name").(string),
-		Description: d.Get("description").(string),
-	})
-	if err != nil {
-		return err
-	}
 	return nil
 }
 

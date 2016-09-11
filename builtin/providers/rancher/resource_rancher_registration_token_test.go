@@ -1,6 +1,7 @@
 package rancher
 
 import (
+	"errors"
 	"fmt"
 	"testing"
 
@@ -21,6 +22,17 @@ func TestAccRancherRegistrationToken_Basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckRancherRegistrationTokenExists("rancher_registration_token.foo", &token),
 					testAccCheckRancherRegistrationTokenAttributes(&token),
+					resource.TestCheckResourceAttr(
+						"rancher_registration_token.foo", "description", "created"),
+				),
+			},
+			resource.TestStep{
+				Config: testAccCheckRancherRegistrationTokenUpdate,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckRancherRegistrationTokenExists("rancher_registration_token.foo", &token),
+					testAccCheckRancherRegistrationTokenAttributes(&token),
+					resource.TestCheckResourceAttr(
+						"rancher_registration_token.foo", "description", "updated"),
 				),
 			},
 		},
@@ -52,7 +64,7 @@ func testAccCheckRancherRegistrationTokenExists(n string, token *client.Registra
 		}
 
 		if rs.Primary.ID == "" {
-			return fmt.Errorf("No Record ID is set")
+			return errors.New("No Record ID is set")
 		}
 
 		rancher, _ := testAccProvider.Meta().(*ClientProvider).client()
@@ -68,7 +80,7 @@ func testAccCheckRancherRegistrationTokenExists(n string, token *client.Registra
 func testAccCheckRancherRegistrationTokenAttributes(token *client.RegistrationToken) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		if token.Command == "" || token.Image == "" || token.Token == "" {
-			return fmt.Errorf("RegistrationToken does not contain computed fields")
+			return errors.New("RegistrationToken does not contain computed fields")
 		}
 		return nil
 	}
@@ -81,4 +93,15 @@ resource "rancher_environment" "foobar" {
 
 resource "rancher_registration_token" "foo" {
   environment_id = "${rancher_environment.foobar.id}"
+	description = "created"
+}`
+
+const testAccCheckRancherRegistrationTokenUpdate = `
+resource "rancher_environment" "foobar" {
+  name = "foobar"
+}
+
+resource "rancher_registration_token" "foo" {
+  environment_id = "${rancher_environment.foobar.id}"
+	description = "updated"
 }`
