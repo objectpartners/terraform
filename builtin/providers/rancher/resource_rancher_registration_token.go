@@ -101,7 +101,7 @@ func resourceRancherRegistrationTokenDelete(d *schema.ResourceData, meta interfa
 	}
 	token, err := rClient.RegistrationToken.ById(d.Id())
 	if err != nil {
-		return nil
+		return err
 	}
 	_, err = rClient.RegistrationToken.ActionDeactivate(token)
 	if err != nil {
@@ -121,7 +121,7 @@ func resourceRancherRegistrationTokenDelete(d *schema.ResourceData, meta interfa
 
 	token, err = rClient.RegistrationToken.ById(d.Id())
 	if err != nil {
-		return nil
+		return err
 	}
 	_, err = rClient.RegistrationToken.ActionRemove(token)
 	if err != nil {

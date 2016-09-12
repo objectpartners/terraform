@@ -21,7 +21,6 @@ func resourceRancherEnvironment() *schema.Resource {
 			"name": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
-				ForceNew: true,
 			},
 			"engine": &schema.Schema{
 				Type:         schema.TypeString,
@@ -47,21 +46,7 @@ func resourceRancherEnvironmentCreate(d *schema.ResourceData, meta interface{}) 
 	if err != nil {
 		return err
 	}
-	settings := &client.Project{
-		Name:           d.Get("name").(string),
-		Description:    d.Get("description").(string),
-		VirtualMachine: d.Get("virtual_machine_support").(bool),
-	}
-	engine := d.Get("engine").(string)
-	if engine == "kubernetes" {
-		settings.Kubernetes = true
-	}
-	if engine == "mesos" {
-		settings.Mesos = true
-	}
-	if engine == "swarm" {
-		settings.Swarm = true
-	}
+	settings := createEnvironment(d)
 	environment, err := rClient.Project.Create(settings)
 	if err != nil {
 		return err
@@ -104,8 +89,31 @@ func resourceRancherEnvironmentRead(d *schema.ResourceData, meta interface{}) er
 }
 
 func resourceRancherEnvironmentUpdate(d *schema.ResourceData, meta interface{}) error {
-	//TODO
-	return nil
+	rClient, err := meta.(*ClientProvider).client()
+	if err != nil {
+		return err
+	}
+	environment, err := rClient.Project.ById(d.Id())
+	if err != nil {
+		return err
+	}
+	settings := createEnvironment(d)
+	_, err = rClient.Project.Update(environment, settings)
+	if err != nil {
+		d.SetId("")
+		return err
+	}
+	rErr := waitForStatus("active", d.Id(), func(id string) (getState, error) {
+		p, e := rClient.Project.ById(id)
+		return func() string {
+			return p.State
+		}, e
+	})
+	if rErr != nil {
+		d.SetId("")
+		return errwrap.Wrapf("{{err}}", rErr)
+	}
+	return resourceRancherEnvironmentRead(d, meta)
 }
 
 func resourceRancherEnvironmentDelete(d *schema.ResourceData, meta interface{}) error {
@@ -115,7 +123,7 @@ func resourceRancherEnvironmentDelete(d *schema.ResourceData, meta interface{}) 
 	}
 	environment, err := rClient.Project.ById(d.Id())
 	if err != nil {
-		return nil
+		return err
 	}
 	err = rClient.Project.Delete(environment)
 	if err != nil {
@@ -132,4 +140,23 @@ func resourceRancherEnvironmentDelete(d *schema.ResourceData, meta interface{}) 
 		return errwrap.Wrapf("{{err}}", rErr)
 	}
 	return nil
+}
+
+func createEnvironment(d *schema.ResourceData) *client.Project {
+	settings := &client.Project{
+		Name:           d.Get("name").(string),
+		Description:    d.Get("description").(string),
+		VirtualMachine: d.Get("virtual_machine_support").(bool),
+	}
+	engine := d.Get("engine").(string)
+	if engine == "kubernetes" {
+		settings.Kubernetes = true
+	}
+	if engine == "mesos" {
+		settings.Mesos = true
+	}
+	if engine == "swarm" {
+		settings.Swarm = true
+	}
+	return settings
 }

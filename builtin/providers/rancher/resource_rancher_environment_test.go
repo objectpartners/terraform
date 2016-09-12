@@ -21,13 +21,24 @@ func TestAccRancherEnvironment_Basic(t *testing.T) {
 				Config: testAccCheckRancherEnvironmentBasic,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckRancherEnvironmentExists("rancher_environment.foobar", &env),
-					testAccCheckRancherEnvironmentAttributes(&env),
 					resource.TestCheckResourceAttr(
 						"rancher_environment.foobar", "name", "foobar"),
 					resource.TestCheckResourceAttr(
 						"rancher_environment.foobar", "description", "Terraform Test Environment"),
 					resource.TestCheckResourceAttr(
 						"rancher_environment.foobar", "engine", "cattle"),
+				),
+			},
+			resource.TestStep{
+				Config: testAccCheckRancherEnvironmentUpdated,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckRancherEnvironmentExists("rancher_environment.foobar", &env),
+					resource.TestCheckResourceAttr(
+						"rancher_environment.foobar", "name", "foobar-update"),
+					resource.TestCheckResourceAttr(
+						"rancher_environment.foobar", "description", "Terraform Test Environment Updated"),
+					resource.TestCheckResourceAttr(
+						"rancher_environment.foobar", "engine", "kubernetes"),
 				),
 			},
 		},
@@ -73,14 +84,15 @@ func testAccCheckRancherEnvironmentExists(n string, env *client.Project) resourc
 	}
 }
 
-func testAccCheckRancherEnvironmentAttributes(env *client.Project) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		return nil
-	}
-}
-
 const testAccCheckRancherEnvironmentBasic = `
 resource "rancher_environment" "foobar" {
   name = "foobar"
   description = "Terraform Test Environment"
+}`
+
+const testAccCheckRancherEnvironmentUpdated = `
+resource "rancher_environment" "foobar" {
+  name = "foobar-update"
+  description = "Terraform Test Environment Updated"
+	engine = "kubernetes"
 }`

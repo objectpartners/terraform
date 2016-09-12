@@ -109,12 +109,12 @@ func resourceRancherStackDelete(d *schema.ResourceData, meta interface{}) error 
 	}
 	stack, err := rClient.Environment.ById(d.Id())
 	if err != nil {
-		return nil
+		return err
 	}
 
 	stack, err = rClient.Environment.ById(d.Id())
 	if err != nil {
-		return nil
+		return err
 	}
 	_, err = rClient.Environment.ActionRemove(stack)
 	if err != nil {
